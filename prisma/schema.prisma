@@ -1,0 +1,170 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String       @id @default(cuid())
+  name          String?
+  email         String       @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  reviews       Review[]
+  reservations  Reservation[]
+  role          UserRole     @default(USER)
+}
+
+enum UserRole {
+  USER
+  RESTAURANT_OWNER
+  ADMIN
+}
+
+model Restaurant {
+  id            String       @id @default(cuid())
+  name          String
+  description   String?
+  address       String
+  city          String
+  state         String
+  zipCode       String
+  phone         String
+  email         String?
+  website       String?
+  latitude      Float?
+  longitude     Float?
+  cuisine       String[]
+  priceRange    PriceRange  @default(MODERATE)
+  openingHours  Json        // Store as structured JSON
+  capacity      Int         @default(0)
+  indoorSeating Boolean     @default(false)
+  features      VenueFeatures[] @default([])
+  parking       ParkingOptions[] @default([])
+  outdoorSeating Int         @default(0)
+  barSeating    Int         @default(0)
+  images        Image[]
+  menuItems     MenuItem[]
+  reviews       Review[]
+  reservations  Reservation[]
+  happyHours    HappyHour[]
+  waitTimes     WaitTime[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+enum PriceRange {
+  INEXPENSIVE
+  MODERATE
+  EXPENSIVE
+  VERY_EXPENSIVE
+}
+
+enum VenueFeatures {
+  BAR
+  LIVE_MUSIC
+  OUTDOOR_SEATING
+  PRIVATE_ROOM
+  WHEELCHAIR_ACCESSIBLE
+  WIFI
+  TV
+  PARKING
+}
+
+enum ParkingOptions {
+  STREET
+  VALET
+  PRIVATE_LOT
+  GARAGE
+}
+
+model MenuItem {
+  id           String     @id @default(cuid())
+  name         String
+  description  String?
+  price        Float
+  category     String
+  images       Image[]
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Image {
+  id           String     @id @default(cuid())
+  url          String
+  alt          String?
+  restaurant   Restaurant? @relation(fields: [restaurantId], references: [id])
+  restaurantId String?
+  menuItem     MenuItem?  @relation(fields: [menuItemId], references: [id])
+  menuItemId   String?
+  createdAt    DateTime   @default(now())
+}
+
+model Review {
+  id           String     @id @default(cuid())
+  rating       Int
+  comment      String?
+  images       String[]   // Array of image URLs
+  user         User       @relation(fields: [userId], references: [id])
+  userId       String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Reservation {
+  id           String     @id @default(cuid())
+  date         DateTime
+  time         DateTime
+  partySize    Int
+  status       ReservationStatus @default(PENDING)
+  notes        String?
+  user         User       @relation(fields: [userId], references: [id])
+  userId       String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+model HappyHour {
+  id           String     @id @default(cuid())
+  dayOfWeek    Int       // 0-6 for Sunday-Saturday
+  startTime    String    // Format: "HH:mm"
+  endTime      String    // Format: "HH:mm"
+  description  String
+  deals        Json      // Store deals as structured JSON
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model WaitTime {
+  id           String     @id @default(cuid())
+  estimatedTime Int       // in minutes
+  partySize    Int
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+} 
