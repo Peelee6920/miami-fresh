@@ -1,73 +1,56 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
 
 export async function GET() {
   try {
     const restaurants = await prisma.restaurant.findMany({
-      include: {
-        reviews: {
-          include: {
-            user: {
-              select: {
-                name: true,
-                image: true,
-              },
-            },
-          },
-          take: 3,
-          orderBy: {
-            createdAt: 'desc',
-          },
-        },
-        _count: {
-          select: {
-            reviews: true,
-          },
+      where: {
+        address: {
+          contains: 'Miami',
         },
       },
-    })
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        address: true,
+        indoorSeating: true,
+        capacity: true,
+        parking: true,
+        openingHours: true,
+      },
+    });
 
-    return NextResponse.json(restaurants)
+    // Log the data to see what's being returned
+    console.log('API Response:', restaurants);
+
+    return NextResponse.json(restaurants);
   } catch (error) {
-    console.error('Error fetching restaurants:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch restaurants' },
-      { status: 500 }
-    )
+    console.error('Error fetching restaurants:', error);
+    return NextResponse.json({ error: 'Error fetching restaurants' }, { status: 500 });
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   try {
-    const json = await request.json()
-
-    const restaurant = await prisma.restaurant.create({
+    const { url } = await request.json();
+    
+    const image = await prisma.image.create({
       data: {
-        name: json.name,
-        description: json.description || null,
-        address: json.address,
-        city: json.city,
-        state: json.state,
-        zipCode: json.zipCode,
-        phone: json.phone,
-        email: json.email || null,
-        website: json.website || null,
-        cuisine: Array.isArray(json.cuisine) ? json.cuisine : [],
-        priceRange: json.priceRange || 'MODERATE',
-        latitude: json.latitude || null,
-        longitude: json.longitude || null,
-        openingHours: json.openingHours || {},
-        capacity: json.capacity || 0,
-        indoorSeating: json.indoorSeating || false,
-      },
-    })
+        url,
+        restaurantId: params.id
+      }
+    });
 
-    return NextResponse.json(restaurant)
+    return NextResponse.json(image);
   } catch (error) {
-    console.error('Error creating restaurant:', error)
+    console.error('Error saving image:', error);
     return NextResponse.json(
-      { error: 'Failed to create restaurant' },
+      { error: 'Failed to save image' },
       { status: 500 }
-    )
+    );
   }
-} 
+}

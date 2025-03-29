@@ -1,11 +1,25 @@
-import { PrismaAdapter } from '@next-auth/prisma-adapter'
-import { prisma } from '../../../../lib/prisma'
-import NextAuth from 'next-auth'
-import type { NextAuthOptions } from 'next-auth'
-import GoogleProvider from 'next-auth/providers/google'
-import CredentialsProvider from 'next-auth/providers/credentials'
-import bcrypt from 'bcryptjs'
-import { authOptions } from '../options'
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
-const handler = NextAuth(authOptions)
-export { handler as GET, handler as POST } 
+export async function GET() {
+  try {
+    const restaurants = await prisma.restaurant.findMany({
+      include: {
+        menuItems: true
+      }
+    });
+
+    const formattedRestaurants = restaurants.map(restaurant => ({
+      ...restaurant,
+      openingHours: JSON.parse(restaurant.openingHours as string)
+    }));
+
+    return NextResponse.json(formattedRestaurants);
+  } catch (error) {
+    console.error('Error fetching restaurants:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch restaurants' },
+      { status: 500 }
+    );
+  }
+}
