@@ -1,33 +1,23 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
-    const restaurants = await prisma.restaurant.findMany({
-      where: {
-        address: {
-          contains: 'Miami',
-        },
-      },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        address: true,
-        indoorSeating: true,
-        capacity: true,
-        parking: true,
-        openingHours: true,
+    const restaurants = await prisma.restaurant.findMany();
+    
+    return NextResponse.json(restaurants, {
+      headers: {
+        'Content-Type': 'application/json',
       },
     });
-
-    // Log the data to see what's being returned
-    console.log('API Response:', restaurants);
-
-    return NextResponse.json(restaurants);
   } catch (error) {
     console.error('Error fetching restaurants:', error);
-    return NextResponse.json({ error: 'Error fetching restaurants' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Error fetching restaurants' },
+      { status: 500 }
+    );
   }
 }
 
